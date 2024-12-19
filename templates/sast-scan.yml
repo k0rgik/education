@@ -1,0 +1,27 @@
+semgrep-oss:
+  stage: pre-build
+  tags: 
+    - vm
+  image:
+    name: semgrep/semgrep
+    entrypoint: [""]
+  script:
+    - mkdir reports
+    - semgrep scan --config=p/golang --sarif $CI_PROJECT_DIR/govwa > $CI_PROJECT_DIR/reports/semgrep_sast.json
+  allow_failure: true
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/reports/semgrep_sast.json
+
+# На основе - https://help.ptsecurity.com/ru-RU/projects/aiee/4.8.1/help/3124519819
+scan-ptai:
+  stage: pre-build
+  image: ubuntu:20.04
+  tags: 
+    - vm
+  before_script:
+    - apt-get update
+    - apt install openjdk-8-jdk -yq
+  script:
+    - java -jar $CI_PROJECT_DIR/ptai-plugin/ptai-cli-plugin-4.8.1.jar --version
+    - java -jar $CI_PROJECT_DIR/ptai-plugin/ptai-cli-plugin-4.8.1.jar ui-ast --input=./govwa/ --project="govwa" --fail-if-failed --url=$PTAI_URL --token=$PTAI_TOKEN --insecure

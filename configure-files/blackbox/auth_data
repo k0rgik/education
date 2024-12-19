@@ -1,0 +1,5 @@
+TYPE=htmlAutoForm
+USERNAME=admin
+PASSWORD=govwaadmin
+FORM_URL=http://10.10.10.40:8888/login
+SUCCESS_STRING=Logout

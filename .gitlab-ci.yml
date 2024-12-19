@@ -1,0 +1,19 @@
+include:
+  - 'templates/secret-find.yml'
+  - 'templates/sast-scan.yml'
+  - 'templates/sca-from-code.yml'
+  - 'templates/sca-from-images.yml'
+  - 'templates/dast-scan.yml'
+  #- 'templates/dockerfile-check.yml'
+  - 'templates/build.yml'
+  - 'templates/deploy.yml'
+
+variables:
+  GIT_STRATEGY: clone
+
+stages:
+  - pre-build
+  - build 
+  - post-build
+  - test-time
+  - deploy
