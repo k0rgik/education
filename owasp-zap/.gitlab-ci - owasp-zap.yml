@@ -1,0 +1,51 @@
+variables:
+  HOST: 10.28.46.9
+  PORT: 8888
+  ZAP_AUTH_HEADER: Cookie
+  ZAP_AUTH_HEADER_VALUE: Uid=1;Level=Low;govwa=MTcyNzg4MDIwNXxEWDhFQVFMX2dBQUJFQUVRQUFCZV80QUFBd1p6ZEhKcGJtY01Ed0FOWjI5MmQyRmZjMlZ6YzJsdmJnUmliMjlzQWdJQUFRWnpkSEpwYm1jTUJ3QUZkVzVoYldVR2MzUnlhVzVuREFjQUJXRmtiV2x1Qm5OMGNtbHVad3dFQUFKcFpBWnpkSEpwYm1jTUF3QUJNUT09fLtBJD8PtY0mPvr5liXcSRyHSlFVLs9OJ7qxBAwhxQEU
+
+stages:
+  - build
+  - dast_scan
+
+.dt-gettext:
+  stage: build
+  tags: 
+    - vm
+  image: docker:stable
+  services:
+    - name: docker:dind
+  before_script:
+    - apk add --update gettext
+    
+build-afscan:
+  stage: build
+  tags:
+    - vm
+  extends: .dt-gettext
+  script:
+  # Подменить текущие переменные окружения на те, что переданы из файла и вывести результат в другой файл
+  # envsubst < {{path/to/input_file}} > {{path/to/output_file}}
+    - envsubst < $CI_PROJECT_DIR/owasp-zap/af-pypelines/video-5_gitlab.yaml > $CI_PROJECT_DIR/owasp-zap/af-pypelines/scan.yaml
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/owasp-zap/af-pypelines/scan.yaml
+
+owasp-zap:
+  stage: dast_scan
+  tags: 
+    - vm
+  needs: ["build-afscan"]
+  dependencies:
+      - build-afscan
+  image: 
+      name: zaproxy/zap-stable
+      entrypoint: [""]
+  script:
+      - echo ${CI_PROJECT_DIR}
+      - zap.sh -cmd -autorun $CI_PROJECT_DIR/owasp-zap/af-pypelines/scan.yaml -loglevel debug -addoninstall jython -addonuninstall ascanrulesBeta -addonuninstall pscanrulesBeta -addonuninstall ascanrulesAlpha -addonuninstall pscanrulesAlpha
+      - cat /home/zap/.ZAP/zap.log > $CI_PROJECT_DIR/zap.log
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/owasp-zap/af-pypelines/*
+      - $CI_PROJECT_DIR/zap.log
